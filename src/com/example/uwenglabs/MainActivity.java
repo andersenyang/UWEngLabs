@@ -5,7 +5,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,6 +26,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -32,6 +35,7 @@ public class MainActivity extends Activity {
     ActionBar ab;
     ListView listView;
     LabListAdapter adapter;
+    ArrayList<LabInfo> labInfoList;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -43,12 +47,9 @@ public class MainActivity extends Activity {
 
         listView = (ListView) findViewById(R.id.listView1);
 
-        new RetrieveHTMLTask().execute("http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.shtml");
+        new RetrieveHTMLTask().execute("http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.html");
 
-        ArrayList<LabInfo> labInfoList = new ArrayList<LabInfo>();
-
-        LabInfo a = new LabInfo("Lab1", "Loc1", "13/24");
-        labInfoList.add(a);
+        labInfoList = new ArrayList<LabInfo>();
         adapter = new LabListAdapter(this, labInfoList);
         listView.setAdapter(adapter);
 
@@ -65,6 +66,7 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_refresh:
+                new RetrieveHTMLTask().execute("http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.html");
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -107,7 +109,8 @@ public class MainActivity extends Activity {
     }
 	
 	private void onScrapingComplete(ArrayList<LabInfo> data) {
-		
+        labInfoList = data;
+		adapter.notifyDataSetChanged();
 	}
 	
 	class RetrieveHTMLTask extends AsyncTask<String, Void, ArrayList<LabInfo>> {
@@ -124,54 +127,90 @@ public class MainActivity extends Activity {
 	    protected ArrayList<LabInfo> doInBackground(String... urls) {
 	        try {
 	            URL url= new URL(urls[0]);
-	            Document doc;
+
+                ArrayList<LabInfo> labInfos = new ArrayList<LabInfo>();
+
 	        	ArrayList<String> labs = new ArrayList<String>();
 	        	ArrayList<String> locs = new ArrayList<String>();
-	        	ArrayList<String> occs = new ArrayList<String>();	        	
-	        	Elements labsDivs, locsDivs, occsDivs;
-	            
-	            // Read in html from url
-	            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-		        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		        while (rd.readLine() != null) {
-			        // Parse html for fields of interest
-		        	
-		        	/* Currently must parse one line at a time because the whole html 
-		        	 * cannot be read into a string at once */
-		        	try {
-		        		if (rd.readLine() != null) {
-				        	doc = Jsoup.parse(rd.readLine());
-				        	
-				        	labsDivs = doc.getElementsByClass("labname");
-				        	locsDivs = doc.getElementsByClass("location");
-				        	occsDivs = doc.getElementsByClass("stations");
-					        	
-				        	addToList(labsDivs, labs);
-				        	addToList(locsDivs, locs);
-				        	addToList(occsDivs, occs);
-		        		}
-		        	} catch (Exception e) {
-		        		Log.d("scraping", e.toString());
-		        	}
-		        }
-		        rd.close();
+	        	ArrayList<String> occs = new ArrayList<String>();
+
+                Document doc = Jsoup.parse(url, 30000);
+
+                Elements labNames = doc.select("span.labname");
+                for (Element element : labNames) {
+                    labs.add(element.text().toString());
+                    Log.w("AAA", element.text().toString());
+                }
+
+                Elements labLocations = doc.select("span.location");
+                for (Element element : labLocations) {
+                    String location = element.text().toString();
+                    //Comes in form of , CPH-3218
+                    location = location.substring(2);
+                    locs.add(location);
+                    Log.w("AAA", element.text().toString());
+                }
+
+                Elements labOccupancy = doc.select("td.stations");
+                for (Element element : labOccupancy) {
+                    occs.add(element.text().toString());
+                    Log.w("AAA", element.text().toString());
+                }
+
+                for (int i = 0; i < labs.size(); ++i)
+                {
+                    LabInfo info = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
+                    labInfos.add(info);
+                    Log.w("AAA",labInfos.get(i).getName());
+
+                }
+//	            // Read in html from url
+//	            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+//		        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+//                String line;
+//		        while ((line = rd.readLine()) != null) {
+//			        // Parse html for fields of interest
+//
+//		        	/* Currently must parse one line at a time because the whole html
+//		        	 * cannot be read into a string at once */
+//		        	try {
+//				        doc = Jsoup.parse(line);
+//
+//				        labsDivs = doc.getElementsByClass("labname");
+//				        locsDivs = doc.getElementsByClass("location");
+//				        occsDivs = doc.getElementsByClass("stations");
+//
+//				        addToList(labsDivs, labs);
+//				        addToList(locsDivs, locs);
+//				        addToList(occsDivs, occs);
+//
+//		        	} catch (Exception e) {
+//		        		Log.d("scraping", e.toString());
+//		        	}
+//		        }
+//		        rd.close();
 	        	
-		        Log.d("scraping", "creating list");
-		        ArrayList<LabInfo> data = new ArrayList<LabInfo>();
-		        
-		        for (int i=0; i < labs.size(); i++) {
-		        	Log.d("getPage", labs.get(i));
-		        	Log.d("getPage", locs.get(i));
-		        	Log.d("getPage", occs.get(i));
-		        	
-		        	LabInfo lab = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
-		        	Log.d("getPage", "created lab");
-		        	data.add(lab);
-		        	Log.d("getPage", "added lab");
-		        }
-		        
-		        Log.d("scraping", data.toString());
-	        	return data;
+//		        Log.d("scraping", "creating list");
+//		        ArrayList<LabInfo> data = new ArrayList<LabInfo>();
+//
+//		        for (int i=0; i < labs.size(); i++) {
+//		        	Log.d("getPage", labs.get(i));
+//		        	Log.d("getPage", locs.get(i));
+//		        	Log.d("getPage", occs.get(i));
+//
+//		        	LabInfo lab = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
+//		        	Log.d("getPage", "created lab");
+//		        	data.add(lab);
+//		        	Log.d("getPage", "added lab");
+//		        }
+//
+	        Log.w("scraping", labInfos.toString());
+
+                for (int i = 0; i < labInfos.size(); ++i)
+                {
+                    Log.w("LabInfos",labInfos.get(i).getName());
+                }
+	        	return labInfos;
 	        } catch (Exception e) {
 	            this.exception = e;
 	            return null;
@@ -183,11 +222,21 @@ public class MainActivity extends Activity {
 			if (pd.isShowing()) {
 				pd.dismiss();
 			}
-			
+
+            final ArrayList<LabInfo> datas = data;
+
 	        if (data == null) {
 	        	//handle error somehow
 	        } else {
-	        	MainActivity.this.onScrapingComplete(data);
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        for (int i = 0; i < datas.size(); ++i)
+                        {
+                            Log.w("AAA",datas.get(i).getName());
+                        }
+                        listView.setAdapter(new LabListAdapter(MainActivity.this, datas));
+                    }
+                });
 	        }
 	    }
 		
