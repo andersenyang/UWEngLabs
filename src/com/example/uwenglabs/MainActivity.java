@@ -5,14 +5,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
 import android.app.ActionBar;
 import android.app.Activity;
-import android.content.Context;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,7 +25,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 public class MainActivity extends Activity {
 
@@ -118,24 +119,36 @@ public class MainActivity extends Activity {
 		        	
 		        	/* Currently must parse one line at a time because the whole html 
 		        	 * cannot be read into a string at once */
-
-		        	doc = Jsoup.parse(rd.readLine());
-		        	
-		        	labsDivs = doc.getElementsByClass("labname");
-		        	locsDivs = doc.getElementsByClass("location");
-		        	occsDivs = doc.getElementsByClass("stations");
-		        	
-		        	addToList(labsDivs, labs);
-		        	addToList(locsDivs, locs);
-		        	addToList(occsDivs, occs);
-		        	Log.d("scraping", labsDivs.toString());
+		        	try {
+		        		if (rd.readLine() != null) {
+				        	doc = Jsoup.parse(rd.readLine());
+				        	
+				        	labsDivs = doc.getElementsByClass("labname");
+				        	locsDivs = doc.getElementsByClass("location");
+				        	occsDivs = doc.getElementsByClass("stations");
+					        	
+				        	addToList(labsDivs, labs);
+				        	addToList(locsDivs, locs);
+				        	addToList(occsDivs, occs);
+		        		}
+		        	} catch (Exception e) {
+		        		Log.d("scraping", e.toString());
+		        	}
 		        }
 		        rd.close();
 	        	
+		        Log.d("scraping", "creating list");
 		        ArrayList<LabInfo> data = new ArrayList<LabInfo>();
 		        
 		        for (int i=0; i < labs.size(); i++) {
-		        	data.add(new LabInfo(labs.get(i), locs.get(i), occs.get(i)));
+		        	Log.d("getPage", labs.get(i));
+		        	Log.d("getPage", locs.get(i));
+		        	Log.d("getPage", occs.get(i));
+		        	
+		        	LabInfo lab = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
+		        	Log.d("getPage", "created lab");
+		        	data.add(lab);
+		        	Log.d("getPage", "added lab");
 		        }
 		        
 		        Log.d("scraping", data.toString());
@@ -162,7 +175,7 @@ public class MainActivity extends Activity {
 		private void addToList(Elements els, ArrayList<String> list) {
 			if (els.size() > 0) {
 				for (Element el : els) {
-					list.add(el.html());
+						list.add(el.html());
 				}
 			}
 		}
