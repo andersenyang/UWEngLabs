@@ -35,11 +35,11 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
-	private void onScrapingComplete(ArrayList<ArrayList<String>> data) {
+	private void onScrapingComplete(ArrayList<LabInfo> data) {
 		
 	}
 	
-	class RetrieveHTMLTask extends AsyncTask<String, Void, ArrayList<ArrayList<String>>> {
+	class RetrieveHTMLTask extends AsyncTask<String, Void, ArrayList<LabInfo>> {
 		private Exception exception;
 		private ProgressDialog pd = new ProgressDialog(MainActivity.this);
 		
@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
 		}
 
 		@Override
-	    protected ArrayList<ArrayList<String>> doInBackground(String... urls) {
+	    protected ArrayList<LabInfo> doInBackground(String... urls) {
 	        try {
 	            URL url= new URL(urls[0]);
 	            Document doc;
@@ -77,14 +77,17 @@ public class MainActivity extends Activity {
 		        	addToList(labsDivs, labs);
 		        	addToList(locsDivs, locs);
 		        	addToList(occsDivs, occs);
+		        	Log.d("scraping", labsDivs.toString());
 		        }
 		        rd.close();
 	        	
-	        	ArrayList<ArrayList<String>> data = new ArrayList<ArrayList<String>>();
-	        	data.add(labs);
-	        	data.add(locs);
-	        	data.add(occs);
+		        ArrayList<LabInfo> data = new ArrayList<LabInfo>();
 		        
+		        for (int i=0; i < labs.size(); i++) {
+		        	data.add(new LabInfo(labs.get(i), locs.get(i), occs.get(i)));
+		        }
+		        
+		        Log.d("scraping", data.toString());
 	        	return data;
 	        } catch (Exception e) {
 	            this.exception = e;
@@ -93,7 +96,7 @@ public class MainActivity extends Activity {
 	    }
 
 		@Override
-	    protected void onPostExecute(ArrayList<ArrayList<String>> data) {
+	    protected void onPostExecute(ArrayList<LabInfo> data) {
 			if (pd.isShowing()) {
 				pd.dismiss();
 			}
