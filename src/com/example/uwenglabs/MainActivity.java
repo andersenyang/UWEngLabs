@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -43,24 +44,37 @@ public class MainActivity extends Activity {
 
         new RetrieveHTMLTask().execute("http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.shtml");
 
-        ArrayList<String> labInfoList = new ArrayList<String>();
+        ArrayList<LabInfo> labInfoList = new ArrayList<LabInfo>();
+
+        LabInfo a = new LabInfo("Lab1", "Loc1", "13/24");
+        labInfoList.add(a);
         adapter = new LabListAdapter(this, labInfoList);
         listView.setAdapter(adapter);
+
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
+		return super.onCreateOptionsMenu(menu);
 	}
 
-    class LabListAdapter extends ArrayAdapter<String> {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_refresh:
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    class LabListAdapter extends ArrayAdapter<LabInfo> {
         Context context;
-        ArrayList<String> labInfoList;
+        ArrayList<LabInfo> labInfoList;
         LabListAdapter adapter;
 
-        LabListAdapter(Context context, ArrayList<String> labInfoList) {
+        LabListAdapter(Context context, ArrayList<LabInfo> labInfoList) {
             super(context, R.layout.row_list, labInfoList);
             this.context = context;
             this.labInfoList = labInfoList;
@@ -78,11 +92,16 @@ public class MainActivity extends Activity {
             TextView labOccupancy = (TextView) rowView.findViewById(R.id.tv_lv_LabOccupancy);
 
             //ImageView imageView = (ImageView) rowView.findViewById(R.id.btn_lv_delete);
-            labName.setText(labInfoList.get(position));
-            labLocation.setText(labInfoList.get(position));
-            labOccupancy.setText(labInfoList.get(position));
+            labName.setText(labInfoList.get(position).getName());
+            labLocation.setText(labInfoList.get(position).getLoc());
+            labOccupancy.setText(labInfoList.get(position).getOcc());
 
             return rowView;
+        }
+
+        @Override
+        public boolean isEnabled(int position) {
+            return false;
         }
     }
 	
@@ -167,4 +186,10 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        finish();
+    }
 }
