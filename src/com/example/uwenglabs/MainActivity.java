@@ -37,17 +37,20 @@ public class MainActivity extends Activity {
     LabListAdapter adapter;
     ArrayList<LabInfo> labInfoList;
 
+    private final String SITE_URL = "http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.html";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         ab = getActionBar();
-        ab.setTitle("Lab Status");
+        ab.setTitle("Engineering Labs");
+        ab.setDisplayShowHomeEnabled(false);
 
         listView = (ListView) findViewById(R.id.listView1);
 
-        new RetrieveHTMLTask().execute("http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.html");
+        new RetrieveHTMLTask().execute(SITE_URL);
 
         labInfoList = new ArrayList<LabInfo>();
         adapter = new LabListAdapter(this, labInfoList);
@@ -66,7 +69,7 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_refresh:
-                new RetrieveHTMLTask().execute("http://www.eng.uwaterloo.ca/~eng_comp/enginfo/lab_current.html");
+                new RetrieveHTMLTask().execute(SITE_URL);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -114,12 +117,11 @@ public class MainActivity extends Activity {
 	}
 	
 	class RetrieveHTMLTask extends AsyncTask<String, Void, ArrayList<LabInfo>> {
-		private Exception exception;
 		private ProgressDialog pd = new ProgressDialog(MainActivity.this);
 		
 		@Override
 		protected void onPreExecute() {
-			this.pd.setMessage("Please wait...");
+			this.pd.setMessage("Retrieving data...");
 			this.pd.show();
 		}
 
@@ -128,7 +130,7 @@ public class MainActivity extends Activity {
 	        try {
 	            URL url= new URL(urls[0]);
 
-                ArrayList<LabInfo> labInfos = new ArrayList<LabInfo>();
+                ArrayList<LabInfo> labInfoList = new ArrayList<LabInfo>();
 
 	        	ArrayList<String> labs = new ArrayList<String>();
 	        	ArrayList<String> locs = new ArrayList<String>();
@@ -139,7 +141,6 @@ public class MainActivity extends Activity {
                 Elements labNames = doc.select("span.labname");
                 for (Element element : labNames) {
                     labs.add(element.text().toString());
-                    Log.w("AAA", element.text().toString());
                 }
 
                 Elements labLocations = doc.select("span.location");
@@ -148,71 +149,20 @@ public class MainActivity extends Activity {
                     //Comes in form of , CPH-3218
                     location = location.substring(2);
                     locs.add(location);
-                    Log.w("AAA", element.text().toString());
                 }
 
                 Elements labOccupancy = doc.select("td.stations");
                 for (Element element : labOccupancy) {
                     occs.add(element.text().toString());
-                    Log.w("AAA", element.text().toString());
                 }
 
                 for (int i = 0; i < labs.size(); ++i)
                 {
                     LabInfo info = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
-                    labInfos.add(info);
-                    Log.w("AAA",labInfos.get(i).getName());
-
+                    labInfoList.add(info);
                 }
-//	            // Read in html from url
-//	            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//		        BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-//                String line;
-//		        while ((line = rd.readLine()) != null) {
-//			        // Parse html for fields of interest
-//
-//		        	/* Currently must parse one line at a time because the whole html
-//		        	 * cannot be read into a string at once */
-//		        	try {
-//				        doc = Jsoup.parse(line);
-//
-//				        labsDivs = doc.getElementsByClass("labname");
-//				        locsDivs = doc.getElementsByClass("location");
-//				        occsDivs = doc.getElementsByClass("stations");
-//
-//				        addToList(labsDivs, labs);
-//				        addToList(locsDivs, locs);
-//				        addToList(occsDivs, occs);
-//
-//		        	} catch (Exception e) {
-//		        		Log.d("scraping", e.toString());
-//		        	}
-//		        }
-//		        rd.close();
-	        	
-//		        Log.d("scraping", "creating list");
-//		        ArrayList<LabInfo> data = new ArrayList<LabInfo>();
-//
-//		        for (int i=0; i < labs.size(); i++) {
-//		        	Log.d("getPage", labs.get(i));
-//		        	Log.d("getPage", locs.get(i));
-//		        	Log.d("getPage", occs.get(i));
-//
-//		        	LabInfo lab = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
-//		        	Log.d("getPage", "created lab");
-//		        	data.add(lab);
-//		        	Log.d("getPage", "added lab");
-//		        }
-//
-	        Log.w("scraping", labInfos.toString());
-
-                for (int i = 0; i < labInfos.size(); ++i)
-                {
-                    Log.w("LabInfos",labInfos.get(i).getName());
-                }
-	        	return labInfos;
+	        	return labInfoList;
 	        } catch (Exception e) {
-	            this.exception = e;
 	            return null;
 	        }
 	    }
@@ -223,35 +173,23 @@ public class MainActivity extends Activity {
 				pd.dismiss();
 			}
 
-            final ArrayList<LabInfo> datas = data;
+            final ArrayList<LabInfo> dataList = data;
 
 	        if (data == null) {
 	        	//handle error somehow
 	        } else {
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        for (int i = 0; i < datas.size(); ++i)
-                        {
-                            Log.w("AAA",datas.get(i).getName());
-                        }
-                        listView.setAdapter(new LabListAdapter(MainActivity.this, datas));
+                        listView.setAdapter(new LabListAdapter(MainActivity.this, dataList));
                     }
                 });
 	        }
 	    }
-		
-		private void addToList(Elements els, ArrayList<String> list) {
-			if (els.size() > 0) {
-				for (Element el : els) {
-						list.add(el.html());
-				}
-			}
-		}
 	}
 
     @Override
     protected void onPause() {
         super.onPause();
-        finish();
+        finish();  //We want to finish because everytime the user comes back, we want to refresh the page
     }
 }
