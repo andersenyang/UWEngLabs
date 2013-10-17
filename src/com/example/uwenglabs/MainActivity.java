@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
 	        	ArrayList<String> locs = new ArrayList<String>();
 	        	ArrayList<String> occs = new ArrayList<String>();
 
-                Document doc = Jsoup.parse(url, 30000);
+                Document doc = Jsoup.parse(url, 10000);
 
                 Elements labNames = doc.select("span.labname");
                 for (Element element : labNames) {
