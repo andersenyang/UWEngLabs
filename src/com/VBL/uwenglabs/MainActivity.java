@@ -1,13 +1,8 @@
-package com.example.uwenglabs;
+package com.VBL.uwenglabs;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -19,14 +14,12 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -93,7 +86,7 @@ public class MainActivity extends Activity {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             rowView = LayoutInflater.from(context).inflate(R.layout.row_list, null);
 
-            final TextView labName = (TextView) rowView.findViewById(R.id.tv_lv_LabName);
+            TextView labName = (TextView) rowView.findViewById(R.id.tv_lv_LabName);
             TextView labLocation = (TextView) rowView.findViewById(R.id.tv_lv_LabLocation);
             TextView labOccupancy = (TextView) rowView.findViewById(R.id.tv_lv_LabOccupancy);
 
@@ -161,6 +154,7 @@ public class MainActivity extends Activity {
                     LabInfo info = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
                     labInfoList.add(info);
                 }
+
 	        	return labInfoList;
 	        } catch (Exception e) {
 	            return null;
@@ -173,17 +167,18 @@ public class MainActivity extends Activity {
 				pd.dismiss();
 			}
 
-            final ArrayList<LabInfo> dataList = data;
+            ArrayList<LabInfo> dataList = new ArrayList<LabInfo>();
 
-	        if (data == null) {
-	        	//handle error somehow
-	        } else {
-                runOnUiThread(new Runnable() {
-                    public void run() {
-                        listView.setAdapter(new LabListAdapter(MainActivity.this, dataList));
-                    }
-                });
+	        if (data != null) {
+	        	dataList = data;
 	        }
+            final ArrayList<LabInfo> listToPass = dataList;
+            runOnUiThread(new Runnable() {
+                    public void run() {
+                    listView.setAdapter(new LabListAdapter(MainActivity.this, listToPass));
+                }
+                });
+
 	    }
 	}
 

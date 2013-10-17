@@ -1,4 +1,4 @@
-package com.example.uwenglabs;
+package com.VBL.uwenglabs;
 
 public class LabInfo {
 	private String labname;
