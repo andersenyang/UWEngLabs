@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             rowView = LayoutInflater.from(context).inflate(R.layout.row_list, null);
 
-            final TextView labName = (TextView) rowView.findViewById(R.id.tv_lv_LabName);
+            TextView labName = (TextView) rowView.findViewById(R.id.tv_lv_LabName);
             TextView labLocation = (TextView) rowView.findViewById(R.id.tv_lv_LabLocation);
             TextView labOccupancy = (TextView) rowView.findViewById(R.id.tv_lv_LabOccupancy);
 
@@ -135,32 +135,36 @@ public class MainActivity extends Activity {
 	        	ArrayList<String> labs = new ArrayList<String>();
 	        	ArrayList<String> locs = new ArrayList<String>();
 	        	ArrayList<String> occs = new ArrayList<String>();
-
-                Document doc = Jsoup.parse(url, 30000);
-
-                Elements labNames = doc.select("span.labname");
-                for (Element element : labNames) {
-                    labs.add(element.text().toString());
-                }
-
-                Elements labLocations = doc.select("span.location");
-                for (Element element : labLocations) {
-                    String location = element.text().toString();
-                    //Comes in form of , CPH-3218
-                    location = location.substring(2);
-                    locs.add(location);
-                }
-
-                Elements labOccupancy = doc.select("td.stations");
-                for (Element element : labOccupancy) {
-                    occs.add(element.text().toString());
-                }
-
-                for (int i = 0; i < labs.size(); ++i)
-                {
-                    LabInfo info = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
-                    labInfoList.add(info);
-                }
+	        	
+	        	try {
+	                Document doc = Jsoup.parse(url, 30000);
+	
+	                Elements labNames = doc.select("span.labname");
+	                for (Element element : labNames) {
+	                    labs.add(element.text().toString());
+	                }
+	
+	                Elements labLocations = doc.select("span.location");
+	                for (Element element : labLocations) {
+	                    String location = element.text().toString();
+	                    //Comes in form of , CPH-3218
+	                    location = location.substring(2);
+	                    locs.add(location);
+	                }
+	
+	                Elements labOccupancy = doc.select("td.stations");
+	                for (Element element : labOccupancy) {
+	                    occs.add(element.text().toString());
+	                }
+	
+	                for (int i = 0; i < labs.size(); ++i)
+	                {
+	                    LabInfo info = new LabInfo(labs.get(i), locs.get(i), occs.get(i));
+	                    labInfoList.add(info);
+	                }
+	        	} catch (Exception e) {
+	        		Log.d("scraping", e.toString());
+	        	}
 	        	return labInfoList;
 	        } catch (Exception e) {
 	            return null;
